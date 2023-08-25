@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BRCCustomModel", "BRCCustomModel.csproj", "{B4B11B3E-4FD7-458F-B8AB-A7DD9161CE72}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BRCCustomModel", "BRCCustomModel.csproj", "{5EF51A2B-81F0-43D5-8377-36B55D2CBE95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B4B11B3E-4FD7-458F-B8AB-A7DD9161CE72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B4B11B3E-4FD7-458F-B8AB-A7DD9161CE72}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B4B11B3E-4FD7-458F-B8AB-A7DD9161CE72}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B4B11B3E-4FD7-458F-B8AB-A7DD9161CE72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EF51A2B-81F0-43D5-8377-36B55D2CBE95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EF51A2B-81F0-43D5-8377-36B55D2CBE95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EF51A2B-81F0-43D5-8377-36B55D2CBE95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EF51A2B-81F0-43D5-8377-36B55D2CBE95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {F04FCEF5-9C51-4332-A388-83723B2EAC3D}
+		SolutionGuid = {2A47DC98-7BC4-4B10-BEAB-EDE19F0FCF65}
 	EndGlobalSection
 EndGlobal
