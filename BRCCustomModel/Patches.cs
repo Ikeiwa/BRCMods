@@ -3,7 +3,7 @@ using Reptile;
 using UnityEngine;
 using System.Reflection;
 using System.Collections;
-using System;
+using UnityEngine;
 
 namespace BRCCustomModel
 {
@@ -39,7 +39,7 @@ namespace BRCCustomModel
 
                 if (Plugin.customModelAssets.ContainsKey(character))
                 {
-                    GameObject newFbxAsset = Plugin.customModelAssets[character].fbx;
+                    GameObject newFbxAsset = Object.Instantiate(Plugin.customModelAssets[character].fbx);
 
                     if (newFbxAsset == null)
                         return returnValue;
@@ -65,7 +65,7 @@ namespace BRCCustomModel
                     Material newmaterialAsset = null;
 
                     if (outfit >= 0 && outfit < 4)
-                        newmaterialAsset = Plugin.customModelAssets[character].skins[outfit];
+                        newmaterialAsset = Object.Instantiate(Plugin.customModelAssets[character].skins[outfit]);
 
                     if(newmaterialAsset == null)
                         return returnValue;

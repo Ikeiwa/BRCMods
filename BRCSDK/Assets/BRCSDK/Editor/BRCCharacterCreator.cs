@@ -99,6 +99,20 @@ public class BRCCharacterCreator : EditorWindow
                         string fileName = Path.GetFileName(path);
                         string folderPath = Path.GetDirectoryName(path);
                         
+                        GameObject avatarClone = Instantiate(model);
+                        foreach (Transform child in avatarClone.GetComponentsInChildren<Transform>())
+                        {
+                            if(child != null && child.CompareTag("EditorOnly")) DestroyImmediate(child.gameObject);
+                        }
+
+                        foreach (ForceSelection child in avatarClone.GetComponentsInChildren<ForceSelection>())
+                        {
+                            if (child != null) DestroyImmediate(child);
+                        }
+                        
+                        PrefabUtility.SaveAsPrefabAsset(avatarClone, "Assets/"+nameSelection[selectedCharacter]+".prefab");
+                        DestroyImmediate(avatarClone);
+                        
                         AssetBundleBuild assetBundleBuild = default(AssetBundleBuild);
                         assetBundleBuild.assetNames = new string[] {
                             $"Assets/{model.name}.prefab",
@@ -130,100 +144,125 @@ public class BRCCharacterCreator : EditorWindow
             }
             
             SkinnedMeshRenderer[] skinnedMeshRenderers = model.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+            bool valid = true;
             
             if (skinnedMeshRenderers.Length == 0)
             {
                 EditorGUILayout.HelpBox("Model has no skinnedmesh.", MessageType.Error);
+                valid = false;
             }
             
             if (skinnedMeshRenderers.Length > 1)
             {
-                EditorGUILayout.HelpBox("Model has more than 1 skinnedmesh.", MessageType.Error);
+                EditorGUILayout.HelpBox("Model has more than 1 skinnedmesh. It will cause problems in game", MessageType.Warning);
             }
 
-            if (skinnedMeshRenderers[0].sharedMaterials.Length > 1)
+            if (skinnedMeshRenderers.Length > 1 && skinnedMeshRenderers[0].sharedMaterials.Length > 1)
             {
-                EditorGUILayout.HelpBox("Model has more than 1 material.", MessageType.Error);
-                return;
+                EditorGUILayout.HelpBox("Model has more than 1 material. It will cause problems in game", MessageType.Warning);
             }
 
             Animator animator = model.GetComponentInChildren<Animator>();
             
             if (!animator)
             {
-                EditorGUILayout.HelpBox("Model has no animator.", MessageType.Error);
+                EditorGUILayout.HelpBox("Model has no animator. Your rig is probably not set to humanoid", MessageType.Error);
+                valid = false;
+            }
+            else
+            {
+                if (!animator.avatar || !animator.avatar.isHuman)
+                {
+                    EditorGUILayout.HelpBox("Model is not humanoid.", MessageType.Error);
+                    valid = false;
+                }
+                else
+                {
+                    if (!animator.GetBoneTransform(HumanBodyBones.Head))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Head.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.LeftHand))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Left Hand.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.RightHand))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Right Hand.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.LeftFoot))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Left Foot.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.RightFoot))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Right Foot.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Left Lower Leg.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (!animator.GetBoneTransform(HumanBodyBones.RightLowerLeg))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Right Lower Leg.", MessageType.Error);
+                        valid = false;
+                    }
+                    
+                    if (animator.GetBoneTransform(HumanBodyBones.Head).position.y > 1.48f)
+                    {
+                        float modelHeight = animator.GetBoneTransform(HumanBodyBones.Head).position.y;
+                        float heightdiff = 1.475f / modelHeight;
+                        
+                        EditorGUILayout.HelpBox("Model is too tall.\nYou should scale it by "+heightdiff, MessageType.Warning);
+                    }
+                    
+                    if (animator.GetBoneTransform(HumanBodyBones.Head).position.y < 1.46f)
+                    {
+                        float modelHeight = animator.GetBoneTransform(HumanBodyBones.Head).position.y;
+                        float heightdiff = modelHeight / 1.475f;
+                        
+                        EditorGUILayout.HelpBox("Model is too short.\nYou should scale it by "+heightdiff, MessageType.Warning);
+                    }
+                }
+            }
+
+            if (!valid)
                 return;
-            }
-            
-            if (!animator.avatar || !animator.avatar.isHuman)
-            {
-                EditorGUILayout.HelpBox("Model is not humanoid.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.Head))
-            {
-                EditorGUILayout.HelpBox("Model has no Head.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.LeftHand))
-            {
-                EditorGUILayout.HelpBox("Model has no Left Hand.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.RightHand))
-            {
-                EditorGUILayout.HelpBox("Model has no Right Hand.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.LeftFoot))
-            {
-                EditorGUILayout.HelpBox("Model has no Left Foot.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.RightFoot))
-            {
-                EditorGUILayout.HelpBox("Model has no Right Foot.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg))
-            {
-                EditorGUILayout.HelpBox("Model has no Left Lower Leg.", MessageType.Error);
-                return;
-            }
-            
-            if (!animator.GetBoneTransform(HumanBodyBones.RightLowerLeg))
-            {
-                EditorGUILayout.HelpBox("Model has no Right Lower Leg.", MessageType.Error);
-                return;
-            }
-            
-            if (animator.GetBoneTransform(HumanBodyBones.Head).position.y > 1.48f)
-            {
-                float modelHeight = animator.GetBoneTransform(HumanBodyBones.Head).position.y;
-                float heightdiff = 1.475f / modelHeight;
-                
-                EditorGUILayout.HelpBox("Model is too tall.\nYou should scale it by "+heightdiff, MessageType.Warning);
-            }
-            
-            if (animator.GetBoneTransform(HumanBodyBones.Head).position.y < 1.46f)
-            {
-                float modelHeight = animator.GetBoneTransform(HumanBodyBones.Head).position.y;
-                float heightdiff = modelHeight / 1.475f;
-                
-                EditorGUILayout.HelpBox("Model is too short.\nYou should scale it by "+heightdiff, MessageType.Warning);
-            }
 
             selectedCharacter = (Characters)EditorGUILayout.EnumPopup("Character to replace", selectedCharacter);
 
             if (GUILayout.Button("Setup Model"))
             {
                 PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+
+/*#region Add Leg Colliders
+
+                CapsuleCollider leftCollider = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg).AddComponent<CapsuleCollider>();
+                leftCollider.center = leftCollider.transform.GetChild(0).localPosition / 2.0f;
+                leftCollider.height = leftCollider.transform.GetChild(0).localPosition.magnitude;
+                leftCollider.radius = leftCollider.height / 5.0f;
+                
+                CapsuleCollider rightCollider = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg).AddComponent<CapsuleCollider>();
+                rightCollider.center = rightCollider.transform.GetChild(0).localPosition / 2.0f;
+                rightCollider.height = rightCollider.transform.GetChild(0).localPosition.magnitude;
+                rightCollider.radius = rightCollider.height / 5.0f;
+
+#endregion*/
+
+#region Generate Avatar
 
                 HumanDescription oldAvatar = CloneHumanDescription(animator.avatar.humanDescription);
 
@@ -237,6 +276,7 @@ public class BRCCharacterCreator : EditorWindow
                 RenameBone(oldAvatar, animator, HumanBodyBones.RightHand, "handr");
                 RenameBone(oldAvatar, animator, HumanBodyBones.Head, "head");
                 
+                // unparent hips (remove armature node)
                 if(hips.parent != model.transform)
                     hips.SetParent(model.transform);
                 
@@ -246,19 +286,31 @@ public class BRCCharacterCreator : EditorWindow
                 
                 Avatar newAvatar = AvatarBuilder.BuildHumanAvatar(model, oldAvatar);
                 animator.avatar = newAvatar;
-                
-                CreateGameObject("footl", animator.GetBoneTransform(HumanBodyBones.LeftFoot));
-                CreateGameObject("footr", animator.GetBoneTransform(HumanBodyBones.RightFoot));
-                CreateGameObject("head", animator.GetBoneTransform(HumanBodyBones.Head));
-                
-                GameObject phoneDirectionRoot = CreateGameObject("phoneDirectionRoot", model.transform, new Vector3(0, 0, -90));
-                CreateGameObject("phoneDirection", phoneDirectionRoot.transform);
-                
-                CreateGameObject("skateboard", model.transform, new Vector3(0, 0, -90));
+
+#endregion
+
+
+#region Create Fake Bones
+
+                GameObject footl = CreateGameObject("footl", animator.GetBoneTransform(HumanBodyBones.LeftFoot));
+                GameObject footr = CreateGameObject("footr", animator.GetBoneTransform(HumanBodyBones.RightFoot));
                 
                 CreateGameObject("handlIK", model.transform, new Vector3(0, 0, -90));
                 CreateGameObject("handrIK", model.transform, new Vector3(0, 0, -90));
                 
+                GameObject propr = CreateGameObject("propr", animator.GetBoneTransform(HumanBodyBones.RightHand));
+                GameObject propl = CreateGameObject("propl", animator.GetBoneTransform(HumanBodyBones.LeftHand));
+                
+#endregion
+
+
+#region Create Props Empties
+
+                GameObject phoneDirectionRoot = CreateGameObject("phoneDirectionRoot", model.transform, new Vector3(0, 0, -90));
+                CreateGameObject("phoneDirection", phoneDirectionRoot.transform);
+                                
+                CreateGameObject("skateboard", model.transform, new Vector3(0, 0, -90));
+                                
                 GameObject bmxFrame = CreateGameObject("bmxFrame", model.transform, new Vector3(0, 0, -90));
                 GameObject bmxGear = CreateGameObject("bmxGear", bmxFrame.transform);
                 CreateGameObject("bmxPedalL", bmxGear.transform);
@@ -272,30 +324,39 @@ public class BRCCharacterCreator : EditorWindow
                 GameObject jetpackPos = CreateGameObject("jetpackPos", spine2, new Vector3(0, -63.155f, 0));
                 GameObject jetpack = CreateGameObject("jetpack", jetpackPos.transform);
                 GameObject boostPos = CreateGameObject("boostPos", jetpack.transform);
-                CreateGameObject("boost", boostPos.transform);
-                
-                GameObject propr = CreateGameObject("propr", animator.GetBoneTransform(HumanBodyBones.RightHand));
-                GameObject propl = CreateGameObject("propl", animator.GetBoneTransform(HumanBodyBones.LeftHand));
+                GameObject boost = CreateGameObject("boost", boostPos.transform);
+
+#endregion
+
+#region Create Previews
+
+                SpawnPreview(propl.transform,"preview_phoneMesh");
+                SpawnPreview(propr.transform,"preview_spraycanMesh");
+                SpawnPreview(footl.transform,"preview_skateLeft");
+                SpawnPreview(footr.transform,"preview_skateRight");
+
+#endregion
+
+#region Save Assets
 
                 AssetDatabase.CreateAsset(newAvatar,"Assets/"+nameSelection[selectedCharacter]+"Avatar.asset");
-                
-                PrefabUtility.SaveAsPrefabAssetAndConnect(model, "Assets/"+nameSelection[selectedCharacter]+".prefab",
-                    InteractionMode.AutomatedAction);
 
                 Material skin1 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
                 AssetDatabase.CreateAsset(skin1,"Assets/"+nameSelection[selectedCharacter]+"Mat0.mat");
-                
+                                
                 Material skin2 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
                 AssetDatabase.CreateAsset(skin2,"Assets/"+nameSelection[selectedCharacter]+"Mat1.mat");
-                
+                                
                 Material skin3 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
                 AssetDatabase.CreateAsset(skin3,"Assets/"+nameSelection[selectedCharacter]+"Mat2.mat");
-                
+                                
                 Material skin4 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
                 AssetDatabase.CreateAsset(skin4,"Assets/"+nameSelection[selectedCharacter]+"Mat3.mat");
-                
+                                
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
+
+#endregion
                 
                 EditorGUIUtility.PingObject(skin1);
             }
@@ -342,10 +403,6 @@ public class BRCCharacterCreator : EditorWindow
         {
             if (avatar.skeleton[i].name == bone.gameObject.name)
                 avatar.skeleton[i].name = newName;
-
-            /*string parentName = GetPrivateFieldValue<string>(avatar.skeleton[i], "parentName");
-            if(parentName == bone.gameObject.name)
-                SetPrivateFieldValue(avatar.skeleton[i], "parentName", newName);*/
         }
 
         bone.gameObject.name = newName;
@@ -394,32 +451,30 @@ public class BRCCharacterCreator : EditorWindow
 
         humanDescription.skeleton = bones.ToArray();
     }
-    
-    public static T GetPrivateFieldValue<T>(object obj, string propName)
+
+    private void SpawnPreview(Transform parent, string previewName)
     {
-        if (obj == null) throw new ArgumentNullException("obj");
-        Type t = obj.GetType();
-        FieldInfo fi = null;
-        while (fi == null && t != null)
-        {
-            fi = t.GetField(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            t = t.BaseType;
-        }
-        if (fi == null) throw new ArgumentOutOfRangeException("propName", string.Format("Field {0} was not found in Type {1}", propName, obj.GetType().FullName));
-        return (T)fi.GetValue(obj);
+        GameObject preview = Resources.Load<GameObject>(previewName);
+        GameObject previewInstance = Instantiate(preview, parent, false);
+
+        previewInstance.transform.localPosition = Vector3.zero;
+        previewInstance.transform.localRotation = Quaternion.identity;
+        previewInstance.transform.localScale = Vector3.one;
+
+        parent.AddComponent<ForceSelection>();
+        
+        SetTagRecursive(previewInstance,"EditorOnly");
     }
     
-    public static void SetPrivateFieldValue<T>(object obj, string propName, T val)
+    private void SetTagRecursive(GameObject go, string tag)
     {
-        if (obj == null) throw new ArgumentNullException("obj");
-        Type t = obj.GetType();
-        FieldInfo fi = null;
-        while (fi == null && t != null)
+        go.tag = tag;
+        foreach (Transform child in go.transform)
         {
-            fi = t.GetField(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            t = t.BaseType;
+            child.gameObject.tag = tag;
+ 
+            if (child.childCount > 0)
+                SetTagRecursive(child.gameObject, tag);
         }
-        if (fi == null) throw new ArgumentOutOfRangeException("propName", string.Format("Field {0} was not found in Type {1}", propName, obj.GetType().FullName));
-        fi.SetValue(obj, val);
     }
 }

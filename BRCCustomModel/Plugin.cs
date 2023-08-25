@@ -26,6 +26,8 @@ namespace BRCCustomModel
 
         private void Awake()
         {
+            Logging.logger = Logger;
+
             if (!Directory.Exists(playerModelsPath))
                 Directory.CreateDirectory(playerModelsPath);
 
@@ -35,7 +37,7 @@ namespace BRCCustomModel
             harmony.PatchAll();
 
             // Plugin startup logic
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            Logging.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
 
         private void RefreshBundlePaths()
@@ -49,7 +51,7 @@ namespace BRCCustomModel
             {
                 if(Enum.TryParse(Path.GetFileNameWithoutExtension(file),out Characters bundleCharacter) && !customModelBundles.ContainsKey(bundleCharacter))
                 {
-                    Logger.LogInfo("Found avatar for "+ bundleCharacter.ToString() + " : " + file);
+                    Logging.LogInfo("Found avatar for "+ bundleCharacter.ToString() + " : " + file);
 
                     AssetBundle bundle = AssetBundle.LoadFromFile(file);
 
@@ -73,5 +75,7 @@ namespace BRCCustomModel
                 }
             }
         }
+
+        
     }
 }
