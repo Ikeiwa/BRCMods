@@ -28,6 +28,15 @@ namespace BRCCustomModel
 
             return false;
         }
+
+        public static void SetPrivateField(this object obj, string fieldName, object value)
+        {
+            var prop = obj.GetType().GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (prop != null)
+                prop.SetValue(obj, value);
+            else
+                Logging.LogError("Field " + fieldName + " Not found");
+        }
     }
 }
 #endif

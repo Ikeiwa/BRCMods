@@ -5,6 +5,9 @@ using UnityEngine;
 using System.Reflection;
 using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.Playables;
 
 namespace BRCCustomModel
 {
@@ -125,6 +128,74 @@ namespace BRCCustomModel
                 }
 
                 return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(NPC))]
+        [HarmonyPatch(nameof(NPC.InitSceneObject))]
+        class Patch_NPC_InitSceneObject
+        {
+            static void Prefix(NPC __instance,ref Transform ___head)
+            {
+                List<OutfitSwappableCharacter> swappableCharacters = __instance.GetComponentsInChildren<OutfitSwappableCharacter>().ToList();
+
+                foreach (OutfitSwappableCharacter npcChar in swappableCharacters)
+                {
+                    if (npcChar != null && Utils.TryGetCustomCharacter(npcChar.Character, out CustomModel customModel))
+                    {
+                        DynamicBone[] dynamicBones = npcChar.transform.parent.GetComponentsInChildren<DynamicBone>();
+
+                        foreach (DynamicBone dynamicBone in dynamicBones)
+                            dynamicBone.enabled = false;
+
+                        Animator anim = npcChar.GetComponentInChildren<Animator>();
+
+                        GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform.parent);
+                        Animator customAnimator = customModelInstance.GetComponent<Animator>();
+                        customAnimator.runtimeAnimatorController = anim.runtimeAnimatorController;
+                        customModelInstance.transform.localPosition = anim.transform.localPosition;
+                        customModelInstance.transform.localRotation = anim.transform.localRotation;
+
+                        OutfitSwappableCharacter outfitSwappableCharacter = customModelInstance.AddComponent<OutfitSwappableCharacter>();
+                        outfitSwappableCharacter.SetPrivateField("character", npcChar.Character);
+                        outfitSwappableCharacter.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>());
+
+                        LookAtIKComponent lookAtIK = customModelInstance.AddComponent<LookAtIKComponent>();
+
+                        customModelInstance.SetActive(npcChar.gameObject.activeSelf);
+
+                        anim.transform.SetParent(null);
+                        anim.runtimeAnimatorController = null;
+                        Object.Destroy(npcChar.gameObject);
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(NPC))]
+        [HarmonyPatch(nameof(NPC.GetLookAtPos))]
+        class Patch_NPC_GetLookAtPos
+        {
+            static bool Prefix(NPC __instance, ref Transform ___head, ref bool ___canLookAtPlayer, ref Vector3 __result)
+            {
+                if (___canLookAtPlayer && ___head)
+                {
+                    __result = ___head.position + Vector3.up * 0.125f;
+                    return false;
+                }
+                __result = __instance.transform.position + Vector3.up * __instance.playerLookAtHeightForNonHumanNPC;
+
+                return false;
+            }
+        }
+
+        [HarmonyPatch(typeof(SequenceHandler))]
+        [HarmonyPatch("ReplaceMaterialsOnCharactersInCutscene")]
+        class Patch_SequenceHandler_ReplaceMaterialsOnCharactersInCutscene
+        {
+            static void Prefix(SequenceHandler __instance, ref PlayableDirector ___sequence)
+            {
+
             }
         }
     }
