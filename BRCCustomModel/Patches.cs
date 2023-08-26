@@ -4,7 +4,6 @@ using Reptile;
 using UnityEngine;
 using System.Reflection;
 using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Playables;
@@ -80,6 +79,22 @@ namespace BRCCustomModel
                 }
                 else
                     return returnValue;
+            }
+        }
+
+        [HarmonyPatch(typeof(OutfitSwitchMenu))]
+        [HarmonyPatch(nameof(OutfitSwitchMenu.SkinButtonSelected))]
+        class Patch_OutfitSwitchMenu_SkinButtonSelected
+        {
+            static void Postfix(MenuTimelineButton clickedButton, int skinIndex, ref CharacterVisual ___previewCharacterVisual)
+            {
+                Characters character = (Characters)___previewCharacterVisual.GetComponentInChildren<BRCAvatarDescriptor>().character;
+
+                if (Utils.IsCustomCharacter(character))
+                {
+                    ___previewCharacterVisual.mainRenderer.material = Plugin.customModelAssets[character].skins[skinIndex];
+                }
+                
             }
         }
 
