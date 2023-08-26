@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿#if !SDK
+using BepInEx;
 using System.IO;
 using System;
 using HarmonyLib;
@@ -10,10 +11,12 @@ using UnityEngine.TextCore.Text;
 
 namespace BRCCustomModel
 {
-    public struct ModelAssets
+    public struct CustomModel
     {
+        public BRCAvatarDescriptor avatarDescriptor;
         public GameObject fbx;
         public Material[] skins;
+        public int blinkBlendshapeIndex;
     }
 
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -22,7 +25,7 @@ namespace BRCCustomModel
         public static string playerModelsPath => Path.Combine(Environment.CurrentDirectory, "PlayerModels");
 
         public static Dictionary<Characters, AssetBundle> customModelBundles;
-        public static Dictionary<Characters, ModelAssets> customModelAssets;
+        public static Dictionary<Characters, CustomModel> customModelAssets;
 
         private void Awake()
         {
@@ -43,7 +46,7 @@ namespace BRCCustomModel
         private void RefreshBundlePaths()
         {
             customModelBundles = new Dictionary<Characters, AssetBundle>();
-            customModelAssets = new Dictionary<Characters, ModelAssets>();
+            customModelAssets = new Dictionary<Characters, CustomModel>();
 
             string[] files = Directory.GetFiles(playerModelsPath, "*.brc", SearchOption.AllDirectories);
 
@@ -65,13 +68,32 @@ namespace BRCCustomModel
                         bundle.LoadAsset<Material>(bundleCharacter.ToString() + "Mat3"),
                     };
 
-                    ModelAssets modelAssets = new ModelAssets
+                    CustomModel customModel = new CustomModel
                     {
                         fbx = bundle.LoadAsset<GameObject>(bundleCharacter.ToString()),
                         skins = skins,
                     };
 
-                    customModelAssets.Add(bundleCharacter, modelAssets);
+                    customModel.avatarDescriptor = customModel.fbx.GetComponent<BRCAvatarDescriptor>();
+
+
+                    customModel.blinkBlendshapeIndex = -1;
+
+                    if (!string.IsNullOrEmpty(customModel.avatarDescriptor.blinkBlendshape) && customModel.avatarDescriptor.blinkRenderer)
+                    {
+                        Mesh blinkMesh = customModel.avatarDescriptor.blinkRenderer.sharedMesh;
+
+                        for (int i = 0; i < blinkMesh.blendShapeCount; i++)
+                        {
+                            if(blinkMesh.GetBlendShapeName(i) == customModel.avatarDescriptor.blinkBlendshape)
+                            {
+                                customModel.blinkBlendshapeIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    customModelAssets.Add(bundleCharacter, customModel);
                 }
             }
         }
@@ -79,3 +101,4 @@ namespace BRCCustomModel
         
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using BepInEx.Logging;
+﻿#if !SDK
+using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,3 +38,4 @@ namespace BRCCustomModel
 
     }
 }
+#endif

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BRCCustomModel;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -248,19 +249,17 @@ public class BRCCharacterCreator : EditorWindow
             {
                 PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
 
-/*#region Add Leg Colliders
+                BRCAvatarDescriptor avatarDescriptor = model.AddComponent<BRCAvatarDescriptor>();
+                avatarDescriptor.blinkRenderer = skinnedMeshRenderers[0];
 
-                CapsuleCollider leftCollider = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg).AddComponent<CapsuleCollider>();
-                leftCollider.center = leftCollider.transform.GetChild(0).localPosition / 2.0f;
-                leftCollider.height = leftCollider.transform.GetChild(0).localPosition.magnitude;
-                leftCollider.radius = leftCollider.height / 5.0f;
-                
-                CapsuleCollider rightCollider = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg).AddComponent<CapsuleCollider>();
-                rightCollider.center = rightCollider.transform.GetChild(0).localPosition / 2.0f;
-                rightCollider.height = rightCollider.transform.GetChild(0).localPosition.magnitude;
-                rightCollider.radius = rightCollider.height / 5.0f;
-
-#endregion*/
+                for (int i = 0; i < skinnedMeshRenderers[0].sharedMesh.blendShapeCount; i++)
+                {
+                    if (skinnedMeshRenderers[0].sharedMesh.GetBlendShapeName(i).ToLower() == "blink")
+                    {
+                        avatarDescriptor.blinkBlendshape = skinnedMeshRenderers[0].sharedMesh.GetBlendShapeName(i);
+                        break;
+                    }
+                }
 
 #region Generate Avatar
 
