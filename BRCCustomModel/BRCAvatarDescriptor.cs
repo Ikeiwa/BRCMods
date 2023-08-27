@@ -12,5 +12,6 @@ namespace BRCCustomModel
         public SkinnedMeshRenderer blinkRenderer;
         public string blinkBlendshape = null;
         public int character = -1;
+        public Material[] skins;
     }
 }

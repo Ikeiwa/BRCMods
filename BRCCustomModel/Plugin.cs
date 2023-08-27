@@ -15,7 +15,6 @@ namespace BRCCustomModel
     {
         public BRCAvatarDescriptor avatarDescriptor;
         public GameObject fbx;
-        public Material[] skins;
         public int blinkBlendshapeIndex;
     }
 
@@ -71,7 +70,6 @@ namespace BRCCustomModel
                     CustomModel customModel = new CustomModel
                     {
                         fbx = bundle.LoadAsset<GameObject>(bundleCharacter.ToString()),
-                        skins = skins,
                     };
 
                     customModel.avatarDescriptor = customModel.fbx.GetComponent<BRCAvatarDescriptor>();

@@ -11,70 +11,40 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Animations;
 
+public enum Characters
+{
+    NONE = -1,
+    VINYL,
+    FRANK,
+    COIL,
+    RED,
+    TRYCE,
+    BEL,
+    RAVE,
+    DOT_EXE,
+    SOLACE,
+    DJ_CYBER,
+    ECLIPSE,
+    DEVIL_THEORY,
+    FAUX,
+    FLESH_PRINCE,
+    RIETVELD,
+    FELIX,
+    OLDHEAD,
+    BASE,
+    JAY,
+    MESH,
+    FUTURISM,
+    RISE,
+    SHINE,
+    FAUX_NO_JETPACK,
+    DOT_EXE_BOSS,
+    RED_FELIX,
+}
+
 public class BRCCharacterCreator : EditorWindow
 {
     private GameObject model;
-    private Characters selectedCharacter = Characters.RED;
-
-    public enum Characters
-    {
-        VINYL,
-        FRANK,
-        COIL,
-        RED,
-        TRYCE,
-        BEL,
-        RAVE,
-        DOT_EXE,
-        SOLACE,
-        DJ_CYBER,
-        ECLIPSE,
-        DEVIL_THEORY,
-        FAUX,
-        FLESH_PRINCE,
-        RIETVELD,
-        FELIX,
-        OLDHEAD,
-        BASE,
-        JAY,
-        MESH,
-        FUTURISM,
-        RISE,
-        SHINE,
-        FAUX_NO_JETPACK,
-        DOT_EXE_BOSS,
-        RED_FELIX,
-    }
-    
-    private Dictionary<Characters, string> nameSelection = new Dictionary<Characters, string>
-    {
-        {Characters.VINYL,"girl1"},
-        {Characters.FRANK,"frank"},
-        {Characters.COIL,"ringdude"},
-        {Characters.RED,"metalHead"},
-        {Characters.TRYCE,"blockGuy"},
-        {Characters.BEL,"spaceGirl"},
-        {Characters.RAVE,"angel"},
-        {Characters.DOT_EXE,"eightBall"},
-        {Characters.SOLACE,"dummy"},
-        {Characters.DJ_CYBER,"dj"},
-        {Characters.ECLIPSE,"medusa"},
-        {Characters.DEVIL_THEORY,"boarder"},
-        {Characters.FAUX,"headMan"},
-        {Characters.FLESH_PRINCE,"prince"},
-        {Characters.RIETVELD,"jetpackBossPlayer"},
-        {Characters.FELIX,"legendFace"},
-        {Characters.OLDHEAD,"oldheadPlayer"},
-        {Characters.BASE,"robot"},
-        {Characters.JAY,"skate"},
-        {Characters.MESH,"wideKid"},
-        {Characters.FUTURISM,"futureGirl"},
-        {Characters.RISE,"pufferGirl"},
-        {Characters.SHINE,"bunGirl"},
-        {Characters.FAUX_NO_JETPACK,"headManNoJetpack"},
-        {Characters.DOT_EXE_BOSS,"eightBallBoss"},
-        {Characters.RED_FELIX,"legendMetalHead"},
-    };
     
     [MenuItem("BRC/Custom Model Creator")]
     static void Init()
@@ -89,61 +59,6 @@ public class BRCCharacterCreator : EditorWindow
 
         if (model)
         {
-            if (nameSelection.Values.Contains(model.name))
-            {
-                if(GUILayout.Button("ExportModel"))
-                {
-                    string path = EditorUtility.SaveFilePanel("Save brc avatar", "", model.name + ".brc", "brc");
-
-                    if (path != "")
-                    {
-                        string fileName = Path.GetFileName(path);
-                        string folderPath = Path.GetDirectoryName(path);
-                        
-                        GameObject avatarClone = Instantiate(model);
-                        foreach (Transform child in avatarClone.GetComponentsInChildren<Transform>())
-                        {
-                            if(child != null && child.CompareTag("EditorOnly")) DestroyImmediate(child.gameObject);
-                        }
-
-                        foreach (ForceSelection child in avatarClone.GetComponentsInChildren<ForceSelection>())
-                        {
-                            if (child != null) DestroyImmediate(child);
-                        }
-                        
-                        PrefabUtility.SaveAsPrefabAsset(avatarClone, "Assets/"+nameSelection[selectedCharacter]+".prefab");
-                        DestroyImmediate(avatarClone);
-                        
-                        AssetBundleBuild assetBundleBuild = default(AssetBundleBuild);
-                        assetBundleBuild.assetNames = new string[] {
-                            $"Assets/{model.name}.prefab",
-                            $"Assets/{model.name}Mat0.mat",
-                            $"Assets/{model.name}Mat1.mat",
-                            $"Assets/{model.name}Mat2.mat",
-                            $"Assets/{model.name}Mat3.mat",
-                        };
-
-                        assetBundleBuild.assetBundleName = fileName;
-                        
-                        DirectoryInfo d = new DirectoryInfo(Application.temporaryCachePath);
-                        foreach (var file in d.GetFiles("*.manifest"))
-                            file.Delete();
-
-                        BuildPipeline.BuildAssetBundles(Application.temporaryCachePath, new AssetBundleBuild[] { assetBundleBuild }, 0, EditorUserBuildSettings.activeBuildTarget);
-                        if(File.Exists(path))
-                            File.Delete(path);
-                        File.Move(Application.temporaryCachePath + "/" + fileName, path);
-                        EditorUtility.DisplayDialog("Exportation Successful!", "Exportation Successful!", "OK");
-                    }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("Exportation Failed!", "Path is invalid.", "OK");
-                    }
-                }
-
-                return;
-            }
-            
             SkinnedMeshRenderer[] skinnedMeshRenderers = model.GetComponentsInChildren<SkinnedMeshRenderer>();
 
             bool valid = true;
@@ -243,15 +158,12 @@ public class BRCCharacterCreator : EditorWindow
             if (!valid)
                 return;
 
-            selectedCharacter = (Characters)EditorGUILayout.EnumPopup("Character to replace", selectedCharacter);
-
             if (GUILayout.Button("Setup Model"))
             {
                 PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
 
                 BRCAvatarDescriptor avatarDescriptor = model.AddComponent<BRCAvatarDescriptor>();
                 avatarDescriptor.blinkRenderer = skinnedMeshRenderers[0];
-                avatarDescriptor.character = (int)selectedCharacter;
 
                 for (int i = 0; i < skinnedMeshRenderers[0].sharedMesh.blendShapeCount; i++)
                 {
@@ -279,8 +191,6 @@ public class BRCCharacterCreator : EditorWindow
                 // unparent hips (remove armature node)
                 if(hips.parent != model.transform)
                     hips.SetParent(model.transform);
-                
-                model.name = nameSelection[selectedCharacter];
                 
                 AddBone(ref oldAvatar, model.transform);
                 
@@ -339,19 +249,27 @@ public class BRCCharacterCreator : EditorWindow
 
 #region Save Assets
 
-                AssetDatabase.CreateAsset(newAvatar,"Assets/"+nameSelection[selectedCharacter]+"Avatar.asset");
+                AssetDatabase.CreateAsset(newAvatar,"Assets/"+model.name+"Avatar.asset");
 
                 Material skin1 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
-                AssetDatabase.CreateAsset(skin1,"Assets/"+nameSelection[selectedCharacter]+"Mat0.mat");
+                AssetDatabase.CreateAsset(skin1,"Assets/"+model.name+"Mat0.mat");
                                 
                 Material skin2 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
-                AssetDatabase.CreateAsset(skin2,"Assets/"+nameSelection[selectedCharacter]+"Mat1.mat");
+                AssetDatabase.CreateAsset(skin2,"Assets/"+model.name+"Mat1.mat");
                                 
                 Material skin3 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
-                AssetDatabase.CreateAsset(skin3,"Assets/"+nameSelection[selectedCharacter]+"Mat2.mat");
+                AssetDatabase.CreateAsset(skin3,"Assets/"+model.name+"Mat2.mat");
                                 
                 Material skin4 = new Material(Shader.Find("Reptile/Ambient Character Fake"));
-                AssetDatabase.CreateAsset(skin4,"Assets/"+nameSelection[selectedCharacter]+"Mat3.mat");
+                AssetDatabase.CreateAsset(skin4,"Assets/"+model.name+"Mat3.mat");
+
+                avatarDescriptor.skins = new[]
+                {
+                    skin1,
+                    skin2,
+                    skin3,
+                    skin4
+                };
                                 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();

@@ -70,7 +70,7 @@ namespace BRCCustomModel
                     Material newmaterialAsset = null;
 
                     if (outfit >= 0 && outfit < 4)
-                        newmaterialAsset = Object.Instantiate(Plugin.customModelAssets[character].skins[outfit]);
+                        newmaterialAsset = Object.Instantiate(Plugin.customModelAssets[character].avatarDescriptor.skins[outfit]);
 
                     if(newmaterialAsset == null)
                         return returnValue;
@@ -95,7 +95,7 @@ namespace BRCCustomModel
                 if (Utils.IsCustomCharacter(character))
                 {
                     Shader oldShader = ___previewCharacterVisual.mainRenderer.material.shader;
-                    ___previewCharacterVisual.mainRenderer.material = Plugin.customModelAssets[character].skins[skinIndex];
+                    ___previewCharacterVisual.mainRenderer.material = Plugin.customModelAssets[character].avatarDescriptor.skins[skinIndex];
                     ___previewCharacterVisual.mainRenderer.material.shader = oldShader;
                 }
                 
@@ -162,30 +162,29 @@ namespace BRCCustomModel
                 {
                     if (npcChar != null && Utils.TryGetCustomCharacter(npcChar.Character, out CustomModel customModel))
                     {
-                        DynamicBone[] dynamicBones = npcChar.transform.parent.GetComponentsInChildren<DynamicBone>();
+                        DynamicBone[] dynamicBones = npcChar.GetComponents<DynamicBone>();
 
                         foreach (DynamicBone dynamicBone in dynamicBones)
                             dynamicBone.enabled = false;
 
                         Animator anim = npcChar.GetComponentInChildren<Animator>();
 
-                        GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform.parent);
+                        GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform);
                         Animator customAnimator = customModelInstance.GetComponent<Animator>();
                         customAnimator.runtimeAnimatorController = anim.runtimeAnimatorController;
                         customModelInstance.transform.localPosition = anim.transform.localPosition;
                         customModelInstance.transform.localRotation = anim.transform.localRotation;
 
-                        OutfitSwappableCharacter outfitSwappableCharacter = customModelInstance.AddComponent<OutfitSwappableCharacter>();
-                        outfitSwappableCharacter.SetPrivateField("character", npcChar.Character);
-                        outfitSwappableCharacter.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>());
+                        npcChar.SetPrivateField("character", npcChar.Character);
+                        npcChar.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>());
 
-                        LookAtIKComponent lookAtIK = customModelInstance.AddComponent<LookAtIKComponent>();
+                        customModelInstance.AddComponent<DummyAnimationEventRelay>();
+                        customModelInstance.AddComponent<LookAtIKComponent>();
 
-                        customModelInstance.SetActive(npcChar.gameObject.activeSelf);
+                        customModelInstance.SetActive(anim.gameObject.activeSelf);
 
                         anim.transform.SetParent(null);
                         anim.runtimeAnimatorController = null;
-                        Object.Destroy(npcChar.gameObject);
                         Object.Destroy(anim.gameObject);
                     }
                 }
