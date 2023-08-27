@@ -90,9 +90,11 @@ public class BRCAvatarDescriptorEditor : Editor
         Characters currentCharacter = (Characters)character.intValue;
         character.intValue = (int)(Characters)EditorGUILayout.EnumPopup("Character", currentCharacter);
 
-        EditorGUILayout.PropertyField(blinkRenderer);
+        if(currentBlendshape != -1){
+            EditorGUILayout.PropertyField(blinkRenderer);
 
-        blinkBlendshape.stringValue = blendshapes[EditorGUILayout.Popup("Blink Blendshape", currentBlendshape, blendshapes.ToArray())];
+            blinkBlendshape.stringValue = blendshapes[EditorGUILayout.Popup("Blink Blendshape", currentBlendshape, blendshapes.ToArray())];
+        }
 
         EditorGUILayout.PropertyField(skins);
         
