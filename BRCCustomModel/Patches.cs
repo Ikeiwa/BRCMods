@@ -156,7 +156,7 @@ namespace BRCCustomModel
         {
             static void Prefix(NPC __instance,ref Transform ___head)
             {
-                List<OutfitSwappableCharacter> swappableCharacters = __instance.GetComponentsInChildren<OutfitSwappableCharacter>().ToList();
+                List<OutfitSwappableCharacter> swappableCharacters = __instance.GetComponentsInChildren<OutfitSwappableCharacter>(true).ToList();
 
                 foreach (OutfitSwappableCharacter npcChar in swappableCharacters)
                 {
@@ -167,7 +167,7 @@ namespace BRCCustomModel
                         foreach (DynamicBone dynamicBone in dynamicBones)
                             dynamicBone.enabled = false;
 
-                        Animator anim = npcChar.GetComponentInChildren<Animator>();
+                        Animator anim = npcChar.GetComponentInChildren<Animator>(true);
 
                         GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform);
                         Animator customAnimator = customModelInstance.GetComponent<Animator>();
@@ -176,7 +176,7 @@ namespace BRCCustomModel
                         customModelInstance.transform.localRotation = anim.transform.localRotation;
 
                         npcChar.SetPrivateField("character", npcChar.Character);
-                        npcChar.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>());
+                        npcChar.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>(true));
 
                         customModelInstance.AddComponent<DummyAnimationEventRelay>();
                         customModelInstance.AddComponent<LookAtIKComponent>();
@@ -212,9 +212,159 @@ namespace BRCCustomModel
         [HarmonyPatch("ReplaceMaterialsOnCharactersInCutscene")]
         class Patch_SequenceHandler_ReplaceMaterialsOnCharactersInCutscene
         {
+            private static Dictionary<string, Characters> cutsceneNames = new Dictionary<string, Characters>
+            {
+                {"FauxNoJetpackStory" ,Characters.headManNoJetpack },
+                {"FauxStory" ,Characters.headMan },
+                {"IreneStory" ,Characters.jetpackBossPlayer },
+                {"DJMaskedStory" ,Characters.dj },
+            };
+
+            private static List<string> reparentedProps = new List<string>
+            {
+                "footl",
+                "footr",
+                "jetpackPos",
+                "propr",
+                "propl",
+            };
+
+            private static void ReparentProp(Transform originalRoot, Transform customRoot, string propName)
+            {
+                Transform prop = originalRoot.FindRecursive(propName);
+                Transform propCustom = customRoot.FindRecursive(propName);
+                if (prop && propCustom)
+                {
+                    for(int i=0;i < prop.childCount; i++)
+                    {
+                        Transform propChild = prop.GetChild(i);
+
+                        Vector3 basePos = propChild.position;
+                        Quaternion baseRot = propChild.rotation;
+                        Vector3 baseScale = propChild.localScale;
+
+                        propChild.SetParent(propCustom);
+                        propChild.localPosition = basePos;
+                        propChild.localRotation = baseRot;
+                        propChild.localScale = baseScale;
+                    }
+                }
+            }
+
+            private static void SwapCutsceneCharacter(Transform charRoot, Characters character, OutfitSwappableCharacter outfitSwap = null)
+            {
+                if (charRoot != null && Utils.TryGetCustomCharacter(character, out CustomModel customModel) && !charRoot.gameObject.name.EndsWith("SWAPPED"))
+                {
+                    DynamicBone[] dynamicBones = charRoot.GetComponents<DynamicBone>();
+
+                    foreach (DynamicBone dynamicBone in dynamicBones)
+                        dynamicBone.enabled = false;
+
+                    Animator anim = null;
+                    foreach (Transform child in charRoot)
+                    {
+                        anim = child.GetComponent<Animator>();
+                        if (anim) break;
+                    }
+
+                    anim.transform.Find("root").gameObject.name = "OLD Root";
+
+                    SkinnedMeshRenderer[] oldRenderers = anim.GetComponentsInChildren<SkinnedMeshRenderer>();
+                    foreach(var oldRenderer in oldRenderers)
+                    {
+                        oldRenderer.gameObject.name += " OLD";
+                        oldRenderer.enabled = false;
+                    }
+
+                    GameObject customModelInstance = Object.Instantiate(customModel.fbx, charRoot);
+                    Animator customAnimator = customModelInstance.GetComponent<Animator>();
+
+                    anim.avatar = customAnimator.avatar;
+
+                    customModelInstance.transform.localPosition = anim.transform.localPosition;
+                    customModelInstance.transform.localRotation = anim.transform.localRotation;
+
+                    SkinnedMeshRenderer skinnedMeshRenderer = customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>(true);
+
+                    if (!outfitSwap)
+                        outfitSwap = charRoot.gameObject.AddComponent<OutfitSwappableCharacter>();
+
+                    outfitSwap.SetPrivateField("character", character);
+                    outfitSwap.SetPrivateField("mainRenderer", skinnedMeshRenderer);
+
+                    if (customModel.avatarDescriptor.blinkRenderer && !string.IsNullOrEmpty(customModel.avatarDescriptor.blinkBlendshape))
+                    {
+                        StoryBlinkAnimation storyBlinkAnimation = anim.GetComponent<StoryBlinkAnimation>();
+                        if (storyBlinkAnimation)
+                        {
+                            storyBlinkAnimation.mainRenderer = customModel.avatarDescriptor.blinkRenderer;
+                            storyBlinkAnimation.characterMesh = storyBlinkAnimation.mainRenderer.sharedMesh;
+                        }
+                    }
+                    else
+                    {
+                        StoryBlinkAnimation storyBlinkAnimation = anim.GetComponent<StoryBlinkAnimation>();
+                        if (storyBlinkAnimation)
+                            storyBlinkAnimation.enabled = false;
+                    }
+
+                    string[] nonTransferObjects = new string[]
+                    {
+                            "handlIK",
+                            "handrIK",
+                            "phoneDirectionRoot",
+                            "skateboard",
+                            "bmxFrame",
+                    };
+
+                    foreach (Transform child in customModelInstance.transform)
+                    {
+                        string childName = child.gameObject.name;
+
+                        if (!nonTransferObjects.Contains(childName))
+                        {
+                            child.SetParent(anim.transform);
+                            child.localPosition = Vector3.zero;
+                            child.localRotation = Quaternion.identity;
+                        }
+                    }
+
+                    Transform customRoot = customModelInstance.transform.Find("root");
+
+                    customRoot.SetParent(anim.transform);
+                    customRoot.localPosition = Vector3.zero;
+                    customRoot.localRotation = Quaternion.identity;
+
+                    foreach(string prop in reparentedProps)
+                    {
+                        ReparentProp(charRoot, customRoot, prop);
+                    }
+
+                    charRoot.gameObject.name += " SWAPPED";
+
+                    Object.Destroy(customModelInstance);
+                }
+            }
+
             static void Prefix(SequenceHandler __instance, ref PlayableDirector ___sequence)
             {
+                Transform[] allCharacters = ___sequence.transform.GetComponentsInChildren<Transform>(true);
 
+                foreach (Transform tr in allCharacters)
+                {
+                    foreach(string key in cutsceneNames.Keys)
+                    {
+                        if(tr.gameObject.name.StartsWith(key))
+                            SwapCutsceneCharacter(tr.transform, cutsceneNames[key], null);
+                    }
+                }
+
+                OutfitSwappableCharacter[] swappableCharacters = ___sequence.transform.GetComponentsInChildren<OutfitSwappableCharacter>(true);
+
+                foreach (OutfitSwappableCharacter npcChar in swappableCharacters)
+                {
+                    SwapCutsceneCharacter(npcChar.transform, npcChar.Character, npcChar);
+                }
             }
         }
     }
