@@ -47,6 +47,8 @@ namespace BRCCustomModel
                     if (newFbxAsset == null)
                         return returnValue;
 
+                        
+                    Object.Destroy(returnValue);
                     return newFbxAsset;
                 }
                 else
@@ -184,6 +186,7 @@ namespace BRCCustomModel
                         anim.transform.SetParent(null);
                         anim.runtimeAnimatorController = null;
                         Object.Destroy(npcChar.gameObject);
+                        Object.Destroy(anim.gameObject);
                     }
                 }
             }
