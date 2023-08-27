@@ -102,9 +102,9 @@ public class BRCAvatarDescriptorEditor : Editor
         
         GUILayout.Space(20);
 
-        bool valid = character.intValue > -1 && character.intValue < 28;
+        bool valid = character.intValue != -1 && character.intValue < 28;
         
-        valid = skins.arraySize == 4;
+        valid &= skins.arraySize == 4;
         foreach (var skin in avatarDescriptor.skins)
         {
             if (!skin)
@@ -117,7 +117,11 @@ public class BRCAvatarDescriptorEditor : Editor
         GUI.enabled = valid;
         if (GUILayout.Button("ExportModel"))
         {
-            ExportModel();
+            if (character.intValue == -1)
+                EditorUtility.DisplayDialog("Error",
+                    "Please select a valid character in the descriptor before exporting.","ok");
+            else
+                ExportModel();
         }
 
     }

@@ -274,9 +274,14 @@ public class BRCCharacterCreator : EditorWindow
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
 
+                Selection.activeGameObject = model;
+                EditorGUIUtility.PingObject(model);
+
+                EditorUtility.DisplayDialog("Tutorial",
+                    "Conversion successful!\nYou can change the materials and export your model in the avatar descriptor that was added to your avatar.\nYou can also do further edits like moving bones or adding Dynamic Bones",
+                    "ok");
+
 #endregion
-                
-                EditorGUIUtility.PingObject(skin1);
             }
         }
     }
