@@ -92,7 +92,9 @@ namespace BRCCustomModel
 
                 if (Utils.IsCustomCharacter(character))
                 {
+                    Shader oldShader = ___previewCharacterVisual.mainRenderer.material.shader;
                     ___previewCharacterVisual.mainRenderer.material = Plugin.customModelAssets[character].skins[skinIndex];
+                    ___previewCharacterVisual.mainRenderer.material.shader = oldShader;
                 }
                 
             }

@@ -251,6 +251,7 @@ public class BRCCharacterCreator : EditorWindow
 
                 BRCAvatarDescriptor avatarDescriptor = model.AddComponent<BRCAvatarDescriptor>();
                 avatarDescriptor.blinkRenderer = skinnedMeshRenderers[0];
+                avatarDescriptor.character = (int)selectedCharacter;
 
                 for (int i = 0; i < skinnedMeshRenderers[0].sharedMesh.blendShapeCount; i++)
                 {
