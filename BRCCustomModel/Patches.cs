@@ -224,7 +224,6 @@ namespace BRCCustomModel
                 {"FuturismBStory" ,Characters.futureGirl },
                 {"FuturismCStory" ,Characters.futureGirl },
                 {"FuturismDStory" ,Characters.futureGirl },
-                {"FuturismStory" ,Characters.futureGirl },
                 {"EclipseAStory" ,Characters.medusa },
                 {"EclipseBStory" ,Characters.medusa },
                 {"EclipseCStory" ,Characters.medusa },
