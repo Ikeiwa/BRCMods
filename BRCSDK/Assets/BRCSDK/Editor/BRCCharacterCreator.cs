@@ -202,8 +202,18 @@ public class BRCCharacterCreator : EditorWindow
 
 #region Create Fake Bones
 
-                GameObject footl = CreateGameObject("footl", animator.GetBoneTransform(HumanBodyBones.LeftFoot));
-                GameObject footr = CreateGameObject("footr", animator.GetBoneTransform(HumanBodyBones.RightFoot));
+                Transform currentLeftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                if(currentLeftFoot.name == "footl"){
+                    currentLeftFoot.name = "LeftFoot";
+                }
+
+                Transform currentRightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+                if(currentRightFoot.name == "footr"){
+                    currentRightFoot.name = "RightFoot";
+                }
+
+                GameObject footl = CreateGameObject("footl", currentLeftFoot);
+                GameObject footr = CreateGameObject("footr", currentRightFoot);
                 
                 CreateGameObject("handlIK", model.transform, new Vector3(0, 0, -90));
                 CreateGameObject("handrIK", model.transform, new Vector3(0, 0, -90));
