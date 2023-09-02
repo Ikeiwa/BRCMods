@@ -142,7 +142,13 @@ public class BRCCharacterCreator : EditorWindow
                         EditorGUILayout.HelpBox("Model has no Right Lower Leg.", MessageType.Error);
                         valid = false;
                     }
-                    
+
+                    if (!animator.GetBoneTransform(HumanBodyBones.Chest))
+                    {
+                        EditorGUILayout.HelpBox("Model has no Chest.", MessageType.Error);
+                        valid = false;
+                    }
+
                     if (animator.GetBoneTransform(HumanBodyBones.Head).position.y > 1.48f)
                     {
                         float modelHeight = animator.GetBoneTransform(HumanBodyBones.Head).position.y;
@@ -195,8 +201,12 @@ public class BRCCharacterCreator : EditorWindow
                 RenameBone(oldAvatar, animator, HumanBodyBones.Head, "head");
                 
                 // unparent hips (remove armature node)
-                if(hips.parent != model.transform)
+                if(hips.parent != model.transform){
+                    Transform oldParent = hips.parent;
                     hips.SetParent(model.transform);
+                    DestroyImmediate(oldParent.gameObject);
+                }
+                    
                 
                 AddBone(ref oldAvatar, model.transform);
                 
@@ -399,6 +409,16 @@ public class BRCCharacterCreator : EditorWindow
         previewInstance.transform.localPosition = Vector3.zero;
         previewInstance.transform.localRotation = Quaternion.identity;
         previewInstance.transform.localScale = Vector3.one;
+
+        if(previewName == "preview_spraycanMesh"){
+            previewInstance.transform.up = parent.transform.right;
+        }
+
+        if(previewName == "preview_phoneMesh")
+        {
+            previewInstance.transform.up = -parent.transform.right;
+        }
+        
 
         parent.AddComponent<ForceSelection>();
         
