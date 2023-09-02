@@ -79,6 +79,12 @@ public class BRCCharacterCreator : EditorWindow
                 EditorGUILayout.HelpBox("Model has more than 1 material. It will cause problems in game", MessageType.Warning);
             }
 
+            if(model.scene.name == null){
+                EditorGUILayout.HelpBox("You're loading your model from the assets folder. Make sure to drag it to the open scene to the left, then drag it into the model box from there!", MessageType.Error);
+                valid = false;
+                return;
+            }
+
             Animator animator = model.GetComponentInChildren<Animator>();
             
             if (!animator)
