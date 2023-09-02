@@ -154,40 +154,75 @@ namespace BRCCustomModel
         [HarmonyPatch(nameof(NPC.InitSceneObject))]
         class Patch_NPC_InitSceneObject
         {
-            static void Prefix(NPC __instance,ref Transform ___head)
+            static void Prefix(NPC __instance,ref Transform ___head, Characters ___character)
             {
                 List<OutfitSwappableCharacter> swappableCharacters = __instance.GetComponentsInChildren<OutfitSwappableCharacter>(true).ToList();
 
-                foreach (OutfitSwappableCharacter npcChar in swappableCharacters)
-                {
-                    if (npcChar != null && Utils.TryGetCustomCharacter(npcChar.Character, out CustomModel customModel))
+                if(swappableCharacters.Count > 0){
+                    foreach (OutfitSwappableCharacter npcChar in swappableCharacters)
                     {
-                        DynamicBone[] dynamicBones = npcChar.GetComponents<DynamicBone>();
+                        if (npcChar != null && Utils.TryGetCustomCharacter(npcChar.Character, out CustomModel customModel))
+                        {
+                            DynamicBone[] dynamicBones = npcChar.GetComponents<DynamicBone>();
 
-                        foreach (DynamicBone dynamicBone in dynamicBones)
-                            dynamicBone.enabled = false;
+                            foreach (DynamicBone dynamicBone in dynamicBones)
+                                dynamicBone.enabled = false;
 
-                        Animator anim = npcChar.GetComponentInChildren<Animator>(true);
+                            Animator anim = npcChar.GetComponentInChildren<Animator>(true);
 
-                        GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform);
-                        Animator customAnimator = customModelInstance.GetComponent<Animator>();
-                        customAnimator.runtimeAnimatorController = anim.runtimeAnimatorController;
-                        customModelInstance.transform.localPosition = anim.transform.localPosition;
-                        customModelInstance.transform.localRotation = anim.transform.localRotation;
+                            GameObject customModelInstance = Object.Instantiate(customModel.fbx, npcChar.transform);
+                            Animator customAnimator = customModelInstance.GetComponent<Animator>();
+                            customAnimator.runtimeAnimatorController = anim.runtimeAnimatorController;
+                            customModelInstance.transform.localPosition = anim.transform.localPosition;
+                            customModelInstance.transform.localRotation = anim.transform.localRotation;
 
-                        npcChar.SetPrivateField("character", npcChar.Character);
-                        npcChar.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>(true));
+                            npcChar.SetPrivateField("character", npcChar.Character);
+                            npcChar.SetPrivateField("mainRenderer", customModelInstance.GetComponentInChildren<SkinnedMeshRenderer>(true));
 
-                        customModelInstance.AddComponent<DummyAnimationEventRelay>();
-                        customModelInstance.AddComponent<LookAtIKComponent>();
+                            customModelInstance.AddComponent<DummyAnimationEventRelay>();
+                            customModelInstance.AddComponent<LookAtIKComponent>();
 
-                        customModelInstance.SetActive(anim.gameObject.activeSelf);
+                            customModelInstance.SetActive(anim.gameObject.activeSelf);
 
-                        anim.transform.SetParent(null);
-                        anim.runtimeAnimatorController = null;
-                        Object.Destroy(anim.gameObject);
+                            anim.transform.SetParent(null);
+                            anim.runtimeAnimatorController = null;
+                            Object.Destroy(anim.gameObject);
+                        }
                     }
+                } else if(Utils.TryGetCustomCharacter(___character, out CustomModel customModel)){
+
+                    Animator anim = __instance.transform.GetComponentInChildren<Animator>(true);
+
+                    GameObject customModelInstance = Object.Instantiate(customModel.fbx, __instance.transform);
+                    Animator customAnimator = customModelInstance.GetComponent<Animator>();
+                    customAnimator.runtimeAnimatorController = anim.runtimeAnimatorController;
+                    customModelInstance.transform.localPosition = anim.transform.localPosition;
+                    customModelInstance.transform.localRotation = anim.transform.localRotation;
+
+                    SkinnedMeshRenderer renderer = anim.GetComponentInChildren<SkinnedMeshRenderer>();
+                    if(renderer != null){
+                        string materialName = renderer.material.name;
+                        int outfitIndex = int.Parse(materialName.Substring(materialName.IndexOf("Mat") + "Mat".Length)[0].ToString());
+                        
+                        SkinnedMeshRenderer newRenderer = customAnimator.GetComponentInChildren<SkinnedMeshRenderer>();
+                        newRenderer.material = customModelInstance.GetComponent<BRCAvatarDescriptor>().skins[outfitIndex];
+                        newRenderer.material.shader = renderer.material.shader;
+                    }
+
+                    
+
+                    /*
+                    customModelInstance.AddComponent<DummyAnimationEventRelay>();
+                    customModelInstance.AddComponent<LookAtIKComponent>();
+                    */
+
+                    customModelInstance.SetActive(anim.gameObject.activeSelf);
+
+                    anim.transform.SetParent(null);
+                    anim.runtimeAnimatorController = null;
+                    Object.Destroy(anim.gameObject);
                 }
+                
             }
         }
 
@@ -212,37 +247,6 @@ namespace BRCCustomModel
         [HarmonyPatch("ReplaceMaterialsOnCharactersInCutscene")]
         class Patch_SequenceHandler_ReplaceMaterialsOnCharactersInCutscene
         {
-            private static Dictionary<string, Characters> cutsceneNames = new Dictionary<string, Characters>
-            {
-                {"FauxNoJetpackStory" ,Characters.headManNoJetpack },
-                {"FauxStory" ,Characters.headMan },
-                {"SolaceStory" ,Characters.dummy },
-                {"IreneStory" ,Characters.jetpackBossPlayer },
-                {"DJMaskedStory" ,Characters.dj },
-                {"DJNoMaskStory" ,Characters.dj },
-                {"FuturismStory" ,Characters.futureGirl },
-                {"FuturismBStory" ,Characters.futureGirl },
-                {"FuturismCStory" ,Characters.futureGirl },
-                {"FuturismDStory" ,Characters.futureGirl },
-                {"EclipseAStory" ,Characters.medusa },
-                {"EclipseBStory" ,Characters.medusa },
-                {"EclipseCStory" ,Characters.medusa },
-                {"EclipseDStory" ,Characters.medusa },
-                {"DotExeEStory" ,Characters.eightBallBoss },
-                {"DotExeAStory" ,Characters.eightBall },
-                {"DotExeBStory" ,Characters.eightBall },
-                {"DotExeCStory" ,Characters.eightBall },
-                {"DotExeDStory" ,Characters.eightBall },
-                {"RedShatteredStory" ,Characters.metalHead },
-                {"DemonTheoryAStory" ,Characters.boarder },
-                {"DemonTheoryBStory" ,Characters.boarder },
-                {"DemonTheoryCStory" ,Characters.boarder },
-                {"FelixNoJetpackStory" ,Characters.legendFace },
-                {"FrankAStory" ,Characters.frank },
-                {"FrankBStory" ,Characters.frank },
-                {"FrankCStory" ,Characters.frank },
-                {"FrankDStory" ,Characters.frank },
-            };
 
             private static List<string> reparentedProps = new List<string>
             {
@@ -376,10 +380,10 @@ namespace BRCCustomModel
 
                 foreach (Transform tr in allCharacters)
                 {
-                    foreach(string key in cutsceneNames.Keys)
+                    foreach(string key in Utils.cutsceneNames.Keys)
                     {
                         if(tr.gameObject.name.StartsWith(key))
-                            SwapCutsceneCharacter(tr.transform, cutsceneNames[key], null);
+                            SwapCutsceneCharacter(tr.transform, Utils.cutsceneNames[key], null);
                     }
                 }
 
